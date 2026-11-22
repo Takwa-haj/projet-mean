@@ -18,7 +18,7 @@
 
 **TaskFlow** is a full-stack web application designed to simplify project and task management. It allows users to create and manage projects, organize tasks, track progress, and monitor deadlines through an interactive Kanban board.
 
-This application was developed as part of the **MEAN Stack module at Polytech Monastir**.
+This application was developed as part of the **MEAN Stack module at Polytechnique sousse**.
 
 ### ✨ Key Features
 
