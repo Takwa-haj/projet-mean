@@ -12,7 +12,7 @@ Ouvrez un terminal PowerShell et exécutez :
 
 ```powershell
 # Aller dans le dossier du projet
-cd C:\Users\takwa\Downloads\projet4-mean-stack-final\projet-mean
+cd C:\Users\username\Downloads\projet4-mean-stack-final\projet-mean
 
 # Créer le projet Angular 17 (répondre aux questions : No routing=Non, SCSS=Oui)
 ng new frontend --style=scss --routing=true --standalone
@@ -125,7 +125,7 @@ ng serve
 Dans un autre terminal :
 
 ```powershell
-cd C:\Users\takwa\Downloads\projet4-mean-stack-final\projet-mean\backend
+cd C:\Users\username\Downloads\projet4-mean-stack-final\projet-mean\backend
 npm install
 node seed.js
 npm run dev
