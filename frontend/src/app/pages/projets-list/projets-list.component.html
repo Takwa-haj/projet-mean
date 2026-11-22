@@ -1,0 +1,92 @@
+<!-- src/app/pages/projets-list/projets-list.component.html -->
+<div class="page-container">
+
+  <!-- En-tête -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Mes Projets</h1>
+      <p class="page-subtitle">{{ projets.length }} projet(s) au total</p>
+    </div>
+    <a routerLink="/projets/nouveau" class="btn btn-primary">
+      <span>+</span> Nouveau projet
+    </a>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-bar">
+    <input
+      type="text"
+      class="input-search"
+      placeholder="Rechercher un projet..."
+      [(ngModel)]="searchTerm"
+      (input)="appliquerFiltres()"
+    />
+    <select class="select-filter" [(ngModel)]="filtreStatut" (change)="appliquerFiltres()">
+      <option value="">Tous les statuts</option>
+      <option *ngFor="let s of statutOptions" [value]="s">{{ s }}</option>
+    </select>
+  </div>
+
+  <!-- Chargement -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Chargement des projets...</p>
+  </div>
+
+  <!-- Erreur -->
+  <div class="error-alert" *ngIf="errorMessage && !isLoading">
+    <span>⚠️</span> {{ errorMessage }}
+    <button (click)="chargerProjets()" class="btn-retry">Réessayer</button>
+  </div>
+
+  <!-- Liste vide -->
+  <div class="empty-state" *ngIf="!isLoading && !errorMessage && projetsFiltres.length === 0">
+    <div class="empty-icon">📁</div>
+    <p>Aucun projet trouvé</p>
+    <a routerLink="/projets/nouveau" class="btn btn-primary">Créer votre premier projet</a>
+  </div>
+
+  <!-- Grille de projets -->
+  <div class="projets-grid" *ngIf="!isLoading && projetsFiltres.length > 0">
+    <div
+      class="projet-card"
+      *ngFor="let projet of projetsFiltres; trackBy: trackById"
+      [style.--accent]="projet.couleur"
+    >
+      <div class="card-accent-bar"></div>
+      <div class="card-body">
+        <div class="card-header-row">
+          <span class="badge" [ngClass]="getStatutClass(projet.statut)">{{ projet.statut }}</span>
+          <div class="card-actions">
+            <a [routerLink]="['/projets', projet._id, 'modifier']" class="btn-icon" title="Modifier">✏️</a>
+            <button class="btn-icon btn-delete" (click)="supprimerProjet(projet._id!, projet.nom)" title="Supprimer">🗑️</button>
+          </div>
+        </div>
+
+        <a [routerLink]="['/projets', projet._id]" class="card-title">{{ projet.nom }}</a>
+        <p class="card-desc" *ngIf="projet.description">{{ projet.description }}</p>
+
+        <!-- Barre de progression -->
+        <div class="progress-section" *ngIf="projet.stats">
+          <div class="progress-header">
+            <span>Avancement</span>
+            <strong>{{ projet.stats.avancement }}%</strong>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="projet.stats.avancement"></div>
+          </div>
+          <div class="progress-footer">
+            {{ projet.stats.terminees }} / {{ projet.stats.total }} tâche(s) terminée(s)
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <a [routerLink]="['/projets', projet._id]" class="btn btn-outline btn-sm">
+            Voir les tâches →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

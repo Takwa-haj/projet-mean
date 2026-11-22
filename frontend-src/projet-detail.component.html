@@ -1,0 +1,160 @@
+<!-- src/app/pages/projet-detail/projet-detail.component.html -->
+<div class="page-container">
+
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div><p>Chargement du projet...</p>
+  </div>
+
+  <div class="error-alert" *ngIf="errorMessage">⚠️ {{ errorMessage }}</div>
+
+  <ng-container *ngIf="projet && !isLoading">
+
+    <!-- En-tête du projet -->
+    <div class="detail-header" [style.--accent]="projet.couleur">
+      <a routerLink="/projets" class="btn-back">← Tous les projets</a>
+
+      <div class="detail-header-content">
+        <div class="detail-header-left">
+          <div class="projet-color-dot" [style.background]="projet.couleur"></div>
+          <div>
+            <h1 class="page-title">{{ projet.nom }}</h1>
+            <p class="page-subtitle" *ngIf="projet.description">{{ projet.description }}</p>
+          </div>
+        </div>
+        <div class="detail-header-actions">
+          <a [routerLink]="['/projets', projet._id, 'modifier']" class="btn btn-outline">✏️ Modifier</a>
+        </div>
+      </div>
+
+      <!-- Stats avancement -->
+      <div class="avancement-card" *ngIf="projet.stats">
+        <div class="avancement-number">{{ projet.stats.avancement }}%</div>
+        <div class="avancement-info">
+          <div class="progress-bar large">
+            <div class="progress-fill" [style.width.%]="projet.stats.avancement" [style.background]="projet.couleur"></div>
+          </div>
+          <span>{{ projet.stats.terminees }} sur {{ projet.stats.total }} tâche(s) terminée(s)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barre actions tâches -->
+    <div class="tasks-toolbar">
+      <h2 class="section-title">Tâches du projet</h2>
+      <div class="tasks-toolbar-right">
+        <select class="select-filter" [(ngModel)]="filtreStatut" (change)="appliquerFiltre()">
+          <option value="">Tous les statuts</option>
+          <option *ngFor="let s of statutOptions" [value]="s">{{ s }}</option>
+        </select>
+        <button class="btn btn-primary" (click)="ouvrirFormulaire()">+ Nouvelle tâche</button>
+      </div>
+    </div>
+
+    <!-- Vue Kanban -->
+    <div class="kanban-board">
+      <div class="kanban-column" *ngFor="let statut of statutOptions">
+        <div class="kanban-col-header">
+          <span class="kanban-col-title">{{ statut }}</span>
+          <span class="kanban-col-count">{{ tachesParStatut(statut).length }}</span>
+        </div>
+
+        <div class="kanban-empty" *ngIf="tachesParStatut(statut).length === 0">
+          Aucune tâche
+        </div>
+
+        <div
+          class="tache-card"
+          *ngFor="let tache of tachesParStatut(statut)"
+          [class.hidden]="filtreStatut && tache.statut !== filtreStatut"
+        >
+          <div class="tache-card-header">
+            <span class="badge-priorite" [ngClass]="getPrioriteClass(tache.priorite)">{{ tache.priorite }}</span>
+            <div class="tache-actions">
+              <button class="btn-icon" (click)="ouvrirFormulaire(tache)" title="Modifier">✏️</button>
+              <button class="btn-icon btn-delete" (click)="supprimerTache(tache._id!)" title="Supprimer">🗑️</button>
+            </div>
+          </div>
+
+          <p class="tache-titre">{{ tache.titre }}</p>
+          <p class="tache-desc" *ngIf="tache.description">{{ tache.description }}</p>
+
+          <div class="tache-echeance" *ngIf="tache.dateEcheance">
+            📅 {{ tache.dateEcheance | date:'dd/MM/yyyy' }}
+          </div>
+
+          <!-- Boutons changement de statut -->
+          <div class="statut-buttons">
+            <button
+              *ngFor="let s of statutOptions"
+              class="btn-statut"
+              [class.active]="tache.statut === s"
+              (click)="changerStatut(tache, s)"
+            >{{ s }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- Modal formulaire tâche -->
+  <div class="modal-overlay" *ngIf="isFormVisible" (click)="fermerFormulaire()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ isTacheEditMode ? 'Modifier la tâche' : 'Nouvelle tâche' }}</h3>
+        <button class="modal-close" (click)="fermerFormulaire()">✕</button>
+      </div>
+
+      <form [formGroup]="tacheForm" (ngSubmit)="sauvegarderTache()" class="modal-body">
+
+        <div class="form-group">
+          <label class="form-label">Titre <span class="required">*</span></label>
+          <input
+            type="text"
+            class="form-input"
+            [class.input-error]="titreCtrl.invalid && titreCtrl.touched"
+            formControlName="titre"
+            placeholder="Description courte de la tâche"
+          />
+          <div class="error-msg" *ngIf="titreCtrl.invalid && titreCtrl.touched">
+            <span *ngIf="titreCtrl.errors?.['required']">Le titre est obligatoire</span>
+            <span *ngIf="titreCtrl.errors?.['minlength']">Minimum 3 caractères</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-input form-textarea" formControlName="description" rows="2" placeholder="Détails..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Statut</label>
+            <select class="form-input form-select" formControlName="statut">
+              <option *ngFor="let s of statutOptions" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Priorité</label>
+            <select class="form-input form-select" formControlName="priorite">
+              <option *ngFor="let p of prioriteOptions" [value]="p">{{ p }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Date d'échéance</label>
+          <input type="date" class="form-input" formControlName="dateEcheance" />
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" (click)="fermerFormulaire()">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="isTacheSaving">
+            {{ isTacheSaving ? 'Enregistrement...' : (isTacheEditMode ? 'Modifier' : 'Créer') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
